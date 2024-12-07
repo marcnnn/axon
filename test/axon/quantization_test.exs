@@ -55,5 +55,65 @@ defmodule Axon.QuantizationTest do
       assert {_, predict_fn} = Axon.build(model)
       assert predict_fn.(model_state, Nx.broadcast(1.0, {1, 1}))
     end
+
+    test "inits and executes properly type {:s, 4}" do
+      model =
+        Axon.input("input")
+        |> Axon.Quantization.weight_only_quantized_dense(10,type: {:s, 4})
+
+      assert {init_fn, _} = Axon.build(model)
+      assert %ModelState{} = model_state = init_fn.(Nx.template({1, 1}, :f32), ModelState.empty())
+
+      assert {_, predict_fn} = Axon.build(model)
+      assert predict_fn.(model_state, Nx.broadcast(1.0, {1, 1}))
+    end
+
+    test "inits and executes properly type {:s, 2}" do
+      model =
+        Axon.input("input")
+        |> Axon.Quantization.weight_only_quantized_dense(10,type: {:s, 2})
+
+      assert {init_fn, _} = Axon.build(model)
+      assert %ModelState{} = model_state = init_fn.(Nx.template({1, 1}, :f32), ModelState.empty())
+
+      assert {_, predict_fn} = Axon.build(model)
+      assert predict_fn.(model_state, Nx.broadcast(1.0, {1, 1}))
+    end
+
+    test "inits and executes properly type {:u, 8}" do
+      model =
+        Axon.input("input")
+        |> Axon.Quantization.weight_only_quantized_dense(10,type: {:u, 8})
+
+      assert {init_fn, _} = Axon.build(model)
+      assert %ModelState{} = model_state = init_fn.(Nx.template({1, 1}, :f32), ModelState.empty())
+
+      assert {_, predict_fn} = Axon.build(model)
+      assert predict_fn.(model_state, Nx.broadcast(1.0, {1, 1}))
+    end
+
+    test "inits and executes properly type {:u, 4}" do
+      model =
+        Axon.input("input")
+        |> Axon.Quantization.weight_only_quantized_dense(10,type: {:u, 4})
+
+      assert {init_fn, _} = Axon.build(model)
+      assert %ModelState{} = model_state = init_fn.(Nx.template({1, 1}, :f32), ModelState.empty())
+
+      assert {_, predict_fn} = Axon.build(model)
+      assert predict_fn.(model_state, Nx.broadcast(1.0, {1, 1}))
+    end
+
+    test "inits and executes properly type {:u, 2}" do
+      model =
+        Axon.input("input")
+        |> Axon.Quantization.weight_only_quantized_dense(10,type: {:u, 2})
+
+      assert {init_fn, _} = Axon.build(model)
+      assert %ModelState{} = model_state = init_fn.(Nx.template({1, 1}, :f32), ModelState.empty())
+
+      assert {_, predict_fn} = Axon.build(model)
+      assert predict_fn.(model_state, Nx.broadcast(1.0, {1, 1}))
+    end
   end
 end

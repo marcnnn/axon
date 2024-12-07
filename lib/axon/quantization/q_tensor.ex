@@ -23,6 +23,16 @@ defmodule Axon.Quantization.QTensor do
     case opts[:type] do
       {:s, 8} ->
         dynamically_quantize_per_channel(Nx.transpose(x), min: -128, max: 127, type: {:s, 8})
+      {:s, 4} ->
+        dynamically_quantize_per_channel(Nx.transpose(x), min: -8, max: 7, type: {:s, 4})
+      {:s, 2} ->
+        dynamically_quantize_per_channel(Nx.transpose(x), min: -2, max: 1, type: {:s, 2})
+      {:u, 8} ->
+        dynamically_quantize_per_channel(Nx.transpose(x), min: 0, max: 255, type: {:u, 8})
+      {:u, 4} ->
+        dynamically_quantize_per_channel(Nx.transpose(x), min: 0, max: 16, type: {:u, 4})
+      {:u, 2} ->
+        dynamically_quantize_per_channel(Nx.transpose(x), min: 0, max: 4, type: {:u, 2})
 
       other ->
         raise "unsupported quantization type #{inspect(other)}"
@@ -165,6 +175,10 @@ defmodule Axon.Quantization.QTensor do
   deftransformp get_and_check_qmin_qmax(target_dtype, quant_min, quant_max) do
     {lower_bound, upper_bound} =
       case target_dtype do
+        {:u, 2} -> {0, 4}
+        {:s, 2} -> {-2, 1}
+        {:u, 4} -> {0, 16}
+        {:s, 4} -> {-8, 7}
         {:u, 8} -> {0, 255}
         {:s, 8} -> {-128, 127}
         {:s, 16} -> {-(2 ** 15), 2 ** 15 - 1}

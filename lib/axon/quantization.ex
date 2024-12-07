@@ -8,8 +8,10 @@ defmodule Axon.Quantization do
 
   This is an **experimental** API which implements weight-only quantization.
   The implementation in this module will convert dense layers in a large
-  model to quantized-variants. The only supported quantization type is
-  `{:s, 8}`. Axon quantization is inference-only. Training is not currently
+  model to quantized-variants. The only supported quantization type are
+  `{:s, 8}`,`{:s, 4}`,`{:s, 2}`,`{:u, 8}`,`{:u, 4}` and `{:u, 2}`.
+  The default is quantization type `{:s, 8}`.
+  Axon quantization is inference-only. Training is not currently
   supported.
   """
   alias Axon.Quantization.Layers
@@ -23,9 +25,16 @@ defmodule Axon.Quantization do
   integer versions of the same operation. It will also replace values
   for all dense kernels in the given model state with quantized
   tensors.
+
+  ## Options
+    * `:type` - the type to quantize to. Defaults to `{:s, 8}`.
   """
-  def quantize(%Axon{} = model, %Axon.ModelState{} = model_state) do
-    quantized_model = quantize_model(model)
+  def quantize(%Axon{} = model, %Axon.ModelState{} = model_state,opts \\ []) do
+    opts =
+      Keyword.validate!(opts, [
+        type: {:s, 8}
+      ])
+    quantized_model = quantize_model(model,type: opts[:type])
     quantized_model_state = quantize_model_state(model, model_state)
     {quantized_model, quantized_model_state}
   end
@@ -34,17 +43,27 @@ defmodule Axon.Quantization do
   Replaces standard operations with quantized variants.
 
   The only supported conversion is to convert regular dense layers
-  to a weight-only 8-bit integer variant. Note that this only replaces
+  to a weight-only integer variant default is signt 8 bit. Note that this only replaces
   the properties of the model. If you have a pre-trained model state
   that you wish to quantize, refer to `Axon.Quantization.quantize_model_state/2`.
 
   All `:dense` layers in the model are replaced with `Axon.Quantization.weight_only_quantized_dense/3`.
+
+  ## Options
+    * `:type` - the type to quantize to.
+      Possible are `{:s, 8}`,`{:s, 4}`,`{:s, 2}`,`{:u, 8}`,`{:u, 4}` and `{:u, 2}`.
+      Defaults to `{:s, 8}`.
   """
-  def quantize_model(%Axon{} = model) do
+  def quantize_model(%Axon{} = model,opts \\ []) do
+    opts =
+      Keyword.validate!(opts, [
+        type: {:s, 8}
+      ])
     quantized_dense_rewriter = fn [%Axon{} = x], _output, name_fn, units, use_bias ->
       weight_only_quantized_dense(x, units,
         use_bias: use_bias,
-        name: name_fn
+        name: name_fn,
+        type: opts[:type]
       )
     end
 
@@ -106,6 +125,8 @@ defmodule Axon.Quantization do
 
     * `:use_bias` - whether the layer should add bias to the output.
       Defaults to `true`.
+
+    * `:type` - the type to quantize to. Defaults to `{:s, 8}`.
   """
   def weight_only_quantized_dense(x, units, opts \\ []) do
     opts =
@@ -114,7 +135,8 @@ defmodule Axon.Quantization do
         :meta,
         use_bias: true,
         kernel_initializer: :glorot_uniform,
-        bias_initializer: :zeros
+        bias_initializer: :zeros,
+        type: {:s, 8}
       ])
 
     meta =
@@ -147,7 +169,7 @@ defmodule Axon.Quantization do
                 fun.(shape, type, key)
             end
 
-          QTensor.from_tensor(tensor)
+          QTensor.from_tensor(tensor,type: opts[:type])
         end
       )
 
